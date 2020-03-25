@@ -183,7 +183,7 @@ def getParams(configFile):
 
     # Extraction params
     paramDict['extractModelName'] = config['Extraction']['extractModel']
-    paramDict['extractModelDir'] = 'final_models/'+paramDict['extractModelName']
+    paramDict['extractModelDir'] = 'models/'+paramDict['extractModelName']
     paramDict['trainFeatDir'] = config['Extraction']['trainFeatDir']
     paramDict['testFeatDir'] = config['Extraction']['testFeatDir']
     paramDict['trainXvecDir'] = 'xvectors/{}/train'.format(paramDict['extractModelName'])
@@ -241,13 +241,9 @@ def par_core_extractXvectors(inFeatsScp, outXvecArk, outXvecScp, net):
             activation[name] = output.detach()
         return hook
     net.fc1.register_forward_hook(get_activation('fc1'))
-    
+
     with kaldi_python_io.ArchiveWriter(outXvecArk, outXvecScp, matrix=False) as writer:
         for key, mat in kaldi_io.read_mat_scp(inFeatsScp):
             out = net(x=torch.Tensor(mat).permute(1,0).unsqueeze(0).cuda(),
                       eps=0)
             writer.write(key, np.squeeze(activation['fc1'].cpu().numpy()))
-
-
-
-

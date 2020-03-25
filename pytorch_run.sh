@@ -12,16 +12,14 @@
 . ./cmd.sh
 . ./path.sh
 
-voxcelebDir=/home/manoj/kaldi/egs/voxceleb/v2/
-
-mfccdir=$voxcelebDir/mfcc
-vaddir=$voxcelebDir/mfcc
+mfccdir=mfcc
+vaddir=mfcc
 
 # The trials file is downloaded by local/make_voxceleb1_v2.pl.
-voxceleb1_trials=$voxcelebDir/data/voxceleb1_test/trials
-voxceleb1_root=$voxcelebDir/vox_data/vox1
-voxceleb2_root=$voxcelebDir/vox_data/vox2
-musan_root=/home/manoj/Datasets/musan
+voxceleb1_trials=data/voxceleb1_test/trials
+voxceleb1_root=vox_data/vox1
+voxceleb2_root=vox_data/vox2
+musan_root=musan
 
 stage=1
 
@@ -159,58 +157,60 @@ if [ $stage -le 5 ]; then
   utils/fix_data_dir.sh data/train_combined_no_sil
 fi
 
-exit 0
-# Run the following script stage-by-stage for the first time
+configFile=local.config
+if [ $stage -le 6 ]; then
+    # Main DNN training
+    python train_xent.py $configFile
+fi
 
-# Main DNN training script yet to be integrated
+if [ $stage -le 7 ]; then
 
+    # Embedding extraction
+    extractModel=`grep ^extractModel $configFile | cut -f 3 -d ' '`
+    trainFeatDir=`grep ^trainFeatDir $configFile | cut -f 3 -d ' '`
+    testFeatDir=`grep ^testFeatDir $configFile | cut -f 3 -d ' '`
+    trainXvecDir=xvectors/$extractModel/train/
+    testXvecDir=xvectors/$extractModel/test/
 
-# Xvector extraction
-configFile=elessar.config.inference
-extractModel=`grep ^extractModel $configFile | cut -f 3 -d ' '`
-trainFeatDir=`grep ^trainFeatDir $configFile | cut -f 3 -d ' '`
-testFeatDir=`grep ^testFeatDir $configFile | cut -f 3 -d ' '`
-trainXvecDir=xvectors/$extractModel/train/
-testXvecDir=xvectors/$extractModel/test/
+    time python3 extract.py $configFile
+    cat $trainXvecDir/xvector.*.scp > $trainXvecDir/xvector.scp
+    cat $testXvecDir/xvector.*.scp > $testXvecDir/xvector.scp
 
-time python3 extract.py elessar.config
-cat $trainXvecDir/xvector.*.scp > $trainXvecDir/xvector.scp
-cat $testXvecDir/xvector.*.scp > $testXvecDir/xvector.scp
+fi
 
+if [ $stage -le 8 ]; then
+   # Reproducing voxceleb results
 
-# Compute the mean vector for centering the evaluation xvectors.
-$train_cmd $trainXvecDir/log/compute_mean.log \
-  ivector-mean scp:$trainXvecDir/xvector.scp \
-  $trainXvecDir/mean.vec
+  # Compute the mean vector for centering the evaluation xvectors.
+  $train_cmd $trainXvecDir/log/compute_mean.log \
+    ivector-mean scp:$trainXvecDir/xvector.scp \
+    $trainXvecDir/mean.vec
 
-# This script uses LDA to decrease the dimensionality prior to PLDA.
-lda_dim=200
-$train_cmd $trainXvecDir/log/lda.log \
-  ivector-compute-lda --total-covariance-factor=0.0 --dim=$lda_dim \
-  "ark:ivector-subtract-global-mean scp:$trainXvecDir/xvector.scp ark:- |" \
-  ark:$trainFeatDir/utt2spk $trainXvecDir/transform.mat
+  # This script uses LDA to decrease the dimensionality prior to PLDA.
+  lda_dim=200
+  $train_cmd $trainXvecDir/log/lda.log \
+    ivector-compute-lda --total-covariance-factor=0.0 --dim=$lda_dim \
+    "ark:ivector-subtract-global-mean scp:$trainXvecDir/xvector.scp ark:- |" \
+    ark:$trainFeatDir/utt2spk $trainXvecDir/transform.mat
 
-# Train the PLDA model.
-$train_cmd $trainXvecDir/log/plda.log \
-  ivector-compute-plda ark:$trainFeatDir/spk2utt \
-  "ark:ivector-subtract-global-mean scp:$trainXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:-  ark:- |" \
-  $trainXvecDir/plda
+  # Train the PLDA model.
+  $train_cmd $trainXvecDir/log/plda.log \
+    ivector-compute-plda ark:$trainFeatDir/spk2utt \
+    "ark:ivector-subtract-global-mean scp:$trainXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:-  ark:- |" \
+    $trainXvecDir/plda
 
-$train_cmd $testXvecDir/log/voxceleb1_test_scoring.log \
-  ivector-plda-scoring --normalize-length=true \
-  "ivector-copy-plda --smoothing=0.0 $trainXvecDir/plda - |" \
-  "ark:ivector-subtract-global-mean $trainXvecDir/mean.vec scp:$testXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
-  "ark:ivector-subtract-global-mean $trainXvecDir/mean.vec scp:$testXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
-  "cat '$voxceleb1_trials' | cut -d\  --fields=1,2 |" $testXvecDir/scores_voxceleb1_test
+  $train_cmd $testXvecDir/log/voxceleb1_test_scoring.log \
+    ivector-plda-scoring --normalize-length=true \
+    "ivector-copy-plda --smoothing=0.0 $trainXvecDir/plda - |" \
+    "ark:ivector-subtract-global-mean $trainXvecDir/mean.vec scp:$testXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "ark:ivector-subtract-global-mean $trainXvecDir/mean.vec scp:$testXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "cat '$voxceleb1_trials' | cut -d\  --fields=1,2 |" $testXvecDir/scores_voxceleb1_test
 
-eer=`compute-eer <(local/prepare_for_eer.py $voxceleb1_trials $testXvecDir/scores_voxceleb1_test) 2> /dev/null`
-mindcf1=`sid/compute_min_dcf.py --p-target 0.01 $testXvecDir/scores_voxceleb1_test $voxceleb1_trials 2> /dev/null`
-mindcf2=`sid/compute_min_dcf.py --p-target 0.001 $testXvecDir/scores_voxceleb1_test $voxceleb1_trials 2> /dev/null`
-echo "EER: $eer%"
-echo "minDCF(p-target=0.01): $mindcf1"
-echo "minDCF(p-target=0.001): $mindcf2"
-### Kaldi x-vectors
-# EER: 3.128%
-# minDCF(p-target=0.01): 0.3258
-# minDCF(p-target=0.001): 0.5003
+  eer=`compute-eer <(local/prepare_for_eer.py $voxceleb1_trials $testXvecDir/scores_voxceleb1_test) 2> /dev/null`
+  mindcf1=`sid/compute_min_dcf.py --p-target 0.01 $testXvecDir/scores_voxceleb1_test $voxceleb1_trials 2> /dev/null`
+  mindcf2=`sid/compute_min_dcf.py --p-target 0.001 $testXvecDir/scores_voxceleb1_test $voxceleb1_trials 2> /dev/null`
+  echo "EER: $eer%"
+  echo "minDCF(p-target=0.01): $mindcf1"
+  echo "minDCF(p-target=0.001): $mindcf2"
 
+fi
