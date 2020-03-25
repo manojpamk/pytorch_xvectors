@@ -1,0 +1,13 @@
+*.pyc
+final_models/
+models/
+archived_setups/
+*cifar*
+*elessar*
+*kronos*
+*hpc*
+old*
+train_hdf5.py
+convert_egs_to_hdf5.py
+cmd.sh
+path.sh
