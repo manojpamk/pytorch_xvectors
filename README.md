@@ -54,8 +54,8 @@ NOTE: The voxceleb features must be prepared prior to evaluation.
 
 #### Results
 
-| Tables        | Kaldi           | pytorch_spkembed  |
-| ------------- |:-------------:| -----:|
+|         | Kaldi (reported)      | pytorch_spkembed  |
+| :-------------: |:-------------:|:-----:|
 | EER      | 3.128% | 2.815% |
 | minDCF(p=0.01)      | 0.3258      |   0.3110 |
 | minDCF(p=0.001) | 0.5003      |    0.4102 |
