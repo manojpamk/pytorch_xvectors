@@ -191,15 +191,19 @@ if [ $stage -le 7 ]; then
     trainXvecDir=xvectors/$extractModel/train/
     testXvecDir=xvectors/$extractModel/test/
 
+fi
+
+if [ $stage -le 8 ]; then
+
     python extract.py $configFile
     cat $trainXvecDir/xvector.*.scp > $trainXvecDir/xvector.scp
     cat $testXvecDir/xvector.*.scp > $testXvecDir/xvector.scp
 
 fi
 
-if [ $stage -le 8 ]; then
-  # Reproducing voxceleb results
-  
+if [ $stage -le 9 ]; then
+
+  # Reproducing voxceleb results  
   # Compute the mean vector for centering the evaluation xvectors.
   $train_cmd $trainXvecDir/log/compute_mean.log \
     ivector-mean scp:$trainXvecDir/xvector.scp \

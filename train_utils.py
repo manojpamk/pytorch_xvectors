@@ -182,7 +182,7 @@ def getParams(configFile):
     paramDict['step_frac'] = float(config['Training']['step_frac'])
 
     # Extraction params
-    paramDict['extractModelName'] = config['Extraction']['extractModel']
+    paramDict['extractModelName'] = 'models/'+config['Extraction']['extractModel']
     paramDict['extractModelDir'] = paramDict['extractModelName']
     paramDict['trainFeatDir'] = config['Extraction']['trainFeatDir']
     paramDict['testFeatDir'] = config['Extraction']['testFeatDir']
