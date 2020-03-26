@@ -10,5 +10,3 @@ archived_setups/
 old*
 train_hdf5.py
 convert_egs_to_hdf5.py
-cmd.sh
-path.sh
