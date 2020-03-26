@@ -9,6 +9,13 @@
 # See ../README.txt for more info on data required.
 # Results (mostly equal error-rates) are inline in comments below.
 
+voxcelebDir=/home/manoj/kaldi/egs/voxceleb/v2/
+
+# Get symlinks, if not present
+for f in sid steps utils local; do
+  [ ! -L $f ] && ln -s $voxcelebDir/$f;
+done
+
 . ./cmd.sh
 . ./path.sh
 
@@ -129,7 +136,6 @@ if [ $stage -le 4 ]; then
     data/voxceleb1_test data/voxceleb1_test_no_sil exp/voxceleb1_test_no_sil
   utils/fix_data_dir.sh data/voxceleb1_test_no_sil
 
-
 fi
 
 if [ $stage -le 5 ]; then
@@ -159,8 +165,21 @@ fi
 
 configFile=local.config
 if [ $stage -le 6 ]; then
-    # Main DNN training
-    python train_xent.py $configFile
+
+  # Prepare the egs
+  sid/nnet3/xvector/get_egs.sh --cmd "$train_cmd" \
+    --nj 8 \
+    --stage 0 \
+    --frames-per-iter 1000000000 \
+    --frames-per-iter-diagnostic 100000 \
+    --min-frames-per-chunk 200 \
+    --max-frames-per-chunk 400 \
+    --num-diagnostic-archives 3 \
+    --num-repeats 50 \
+    data/train_combined_no_sil exp/xvector_nnet_1a/egs/
+
+  # Main DNN training
+  python train_xent.py $configFile
 fi
 
 if [ $stage -le 7 ]; then
@@ -172,15 +191,15 @@ if [ $stage -le 7 ]; then
     trainXvecDir=xvectors/$extractModel/train/
     testXvecDir=xvectors/$extractModel/test/
 
-    time python3 extract.py $configFile
+    python extract.py $configFile
     cat $trainXvecDir/xvector.*.scp > $trainXvecDir/xvector.scp
     cat $testXvecDir/xvector.*.scp > $testXvecDir/xvector.scp
 
 fi
 
 if [ $stage -le 8 ]; then
-   # Reproducing voxceleb results
-
+  # Reproducing voxceleb results
+  
   # Compute the mean vector for centering the evaluation xvectors.
   $train_cmd $trainXvecDir/log/compute_mean.log \
     ivector-mean scp:$trainXvecDir/xvector.scp \

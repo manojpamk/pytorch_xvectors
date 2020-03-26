@@ -1,0 +1,35 @@
+## <div align="center">Deep speaker embeddings in PyTorch</div>
+
+### Requirements:
+Python Libraries
+```
+python==3.6.10
+torch==1.4.0
+kaldi-io==0.9.1
+kaldi-python-io==1.0.4
+```
+Kaldi: https://github.com/kaldi-asr/kaldi
+
+### Data Preparation
+
+Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py). The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. Features for embedding extraction are expected in Kaldi matrix format, read using the [kaldi_io](https://github.com/vesis84/kaldi-io-for-python) library. Extracted embeddings are written in Kaldi vector format, similar to `xvector.ark`. 
+
+### Training
+``` 
+python train_xent.py local.config
+```
+
+### Embedding extraction
+```
+python extract.py local.config
+```
+The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on the voxceleb recipe on an end-to-end basis.
+
+## Configuration file 
+
+Two models are defined in [models.py](models.py): 
+* `simpleTDNN` (`modelType` = 3): A small time-delay neural network with stats pooling similar to the xvector architecture.
+* `xvecTDNN` (`modelType` = 4): The xvector architecture as provided by Kaldi.
+
+Three parameters have to be manually provided in the config file: number of training archives (`egs.*.ark`), number of speakers and number of examples in an archive.
+
