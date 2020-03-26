@@ -60,3 +60,4 @@ NOTE: The voxceleb features must be prepared prior to evaluation.
 | minDCF(p=0.01)      | 0.3258      |   0.3110 |
 | minDCF(p=0.001) | 0.5003      |    0.4102 |
 
+
