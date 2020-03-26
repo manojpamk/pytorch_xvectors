@@ -10,6 +10,7 @@
 # Results (mostly equal error-rates) are inline in comments below.
 
 voxcelebDir=/home/manoj/kaldi/egs/voxceleb/v2/
+configFile=local.config
 
 # Get symlinks, if not present
 for f in sid steps utils local; do
@@ -163,7 +164,6 @@ if [ $stage -le 5 ]; then
   utils/fix_data_dir.sh data/train_combined_no_sil
 fi
 
-configFile=local.config
 if [ $stage -le 6 ]; then
 
   # Prepare the egs
