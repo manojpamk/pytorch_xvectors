@@ -10,12 +10,12 @@ import os
 import glob
 import h5py
 import torch
-import kaldi_io
 import configparser
 from datetime import datetime
 import numpy as np
 from models import *
 import kaldi_python_io
+from kaldiio import ReadHelper
 from torch.utils.data import Dataset, IterableDataset
 #from apex.parallel import DistributedDataParallel
 from collections import OrderedDict
@@ -241,7 +241,8 @@ def par_core_extractXvectors(inFeatsScp, outXvecArk, outXvecScp, net, layerName)
     net.fc1.register_forward_hook(get_activation(layerName))
 
     with kaldi_python_io.ArchiveWriter(outXvecArk, outXvecScp, matrix=False) as writer:
-        for key, mat in kaldi_io.read_mat_scp(inFeatsScp):
-            out = net(x=torch.Tensor(mat).permute(1,0).unsqueeze(0).cuda(),
-                      eps=0)
-            writer.write(key, np.squeeze(activation[layerName].cpu().numpy()))
+        with ReadHelper('scp:%s'%inFeatsScp) as reader:
+            for key, mat in reader:
+                out = net(x=torch.Tensor(mat).permute(1,0).unsqueeze(0).cuda(),
+                          eps=0)
+                writer.write(key, np.squeeze(activation[layerName].cpu().numpy()))

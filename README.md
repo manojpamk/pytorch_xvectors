@@ -3,9 +3,9 @@
 ### Requirements:
 Python Libraries
 ```
-python==3.6.10
 torch==1.4.0
-kaldi-io==0.9.1
+python==3.6.10
+kaldiio==2.15.1
 kaldi-python-io==1.0.4
 ```
 Kaldi: https://github.com/kaldi-asr/kaldi
