@@ -186,8 +186,8 @@ def getParams(configFile):
     paramDict['extractModelDir'] = paramDict['extractModelName']
     paramDict['trainFeatDir'] = config['Extraction']['trainFeatDir']
     paramDict['testFeatDir'] = config['Extraction']['testFeatDir']
-    paramDict['trainXvecDir'] = 'xvectors/{}/train'.format(paramDict['extractModelName'])
-    paramDict['testXvecDir'] = 'xvectors/{}/test'.format(paramDict['extractModelName'])
+    paramDict['trainXvecDir'] = config['Extraction']['trainXvecDir']
+    paramDict['testXvecDir'] = config['Extraction']['testXvecDir']
 
     return paramDict
 
