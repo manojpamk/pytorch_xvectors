@@ -3,9 +3,9 @@
 ### Requirements:
 Python Libraries
 ```
-torch==1.4.0
 python==3.6.10
-kaldiio==2.15.1
+torch==1.4.0
+kaldi-io==0.9.1
 kaldi-python-io==1.0.4
 ```
 Kaldi: https://github.com/kaldi-asr/kaldi
@@ -52,11 +52,20 @@ NOTE: The voxceleb features must be prepared prior to evaluation.
    ```
 5) Alternatively, pretrained PLDA model is available inside `xvectors/` directory.   
    
-#### Results
+## Results
 
+#### 1. Speaker Verification 
+    
 |         | Kaldi           | pytorch_spkembed  |
-|:-------------:|:-------------:|:-----:|
+|:-------------|:-------------:|:-----:|
 | EER      | 3.128% | 2.815% |
 | minDCF(p=0.01)      | 0.3258      |   0.3110 |
 | minDCF(p=0.001) | 0.5003      |    0.4102 |
+
+#### 2. Speaker Diarization (DER)
+
+|         | Kaldi           | pytorch_spkembed  |
+|:-------------|:-------------:|:-----:|
+| DIHARD2 dev (no collar, oracle #spkrs)      | 25.38% | 26.48% |
+| DIHARD2 dev (no collar, est #spkrs)      | 32.96% | 32.81% |
 
