@@ -43,19 +43,19 @@ Three parameters have to be manually provided in the config file: number of trai
 To reproduce voxceleb EER results with the pretrained model, follow the below steps. 
 NOTE: The voxceleb features must be prepared prior to evaluation.
 
-1) Download the [model](https://drive.google.com/file/d/1zVcaRbQMXkJ6gM7Pt53ecYa1gU3deVDp/view?usp=sharing)
+1) Download the [model](https://drive.google.com/file/d/13kYPc76pA4_Axw0Jm5Vk0fLxcLD8oBWv/view?usp=sharing)
 2) Extract local.config and models/ into the installation directory
 3) Set the variables `trainFeatDir` and `testFeatDir` in local.config; and `voxceleb1_trials` in [pytorch_run.sh](pytorch_run.sh)
 4) Extract embeddings and compute EER, minDCF. Set `stage=8` in [pytorch_run.sh](pytorch_run.sh) and execute:
    ```
    bash pytorch_run.sh 
    ```
-
-
+5) Alternatively, pretrained PLDA model is available inside `xvectors/` directory.   
+   
 #### Results
 
-|         | Kaldi (reported)      | pytorch_spkembed  |
-| :-------------: |:-------------:|:-----:|
+| Tables        | Kaldi           | pytorch_spkembed  |
+| ------------- |:-------------:| -----:|
 | EER      | 3.128% | 2.815% |
 | minDCF(p=0.01)      | 0.3258      |   0.3110 |
 | minDCF(p=0.001) | 0.5003      |    0.4102 |
