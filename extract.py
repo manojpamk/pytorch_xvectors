@@ -19,7 +19,7 @@ from torch.multiprocessing import Pool, Process, set_start_method
 torch.multiprocessing.set_start_method('spawn', force=True)
 
 def getSplitNum(text):
-    return int(text.split('/')[-1].lstrip('split')
+    return int(text.split('/')[-1].lstrip('split'))
 
 def main():
 
