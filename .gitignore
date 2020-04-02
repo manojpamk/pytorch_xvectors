@@ -5,9 +5,8 @@ final_models/
 models/
 archived_setups/
 *cifar*
+*.config
 *elessar*
-*kronos*
-*hpc*
 old*
 train_hdf5.py
 convert_egs_to_hdf5.py
