@@ -59,13 +59,11 @@ if [ "$skipDataPrep" == "0" ]; then
   fi
 
   # Create VAD directory
-  if [ ! -d $currDir/oracleVAD ] || [ ! -d $currDir/evalVAD ]; then
-    python convert_rttm_to_vad.py $wavDir $rttmDir $currDir/oracleVAD
-  fi
+  python convert_rttm_to_vad.py $wavDir $rttmDir $expDir/oracleVAD
 
   while read -r line; do
       uttID=`echo $line | cut -f 1 -d ' '`
-      inVadFile=$currDir/oracleVAD/$uttID.csv
+      inVadFile=$expDir/oracleVAD/$uttID.csv
       [ ! -f $inVadFile ] && { echo "Input vad file does not exist"; exit 0; }
       paste -d ' ' <(echo $uttID) <(cut -f 2 -d ',' $inVadFile | tr "\n" " " | sed "s/^/ [ /g" | sed "s/$/ ]/g") >> $dataDir/vad.txt
   done < $dataDir/utt2spk
