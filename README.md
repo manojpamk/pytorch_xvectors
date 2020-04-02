@@ -88,14 +88,6 @@ optional arguments:
 ```
 The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on the voxceleb recipe on an end-to-end basis.
 
-## Configuration file
-
-Two models are defined in [models.py](models.py):
-* `simpleTDNN` (`modelType` = 3): A small time-delay neural network with stats pooling similar to the xvector architecture.
-* `xvecTDNN` (`modelType` = 4): The xvector architecture as provided by Kaldi.
-
-Three parameters have to be manually provided in the config file: number of training archives (`egs.*.ark`), number of speakers and number of examples in an archive.
-
 ## Pretrained model
 
 To reproduce voxceleb EER results with the pretrained model, follow the below steps.
