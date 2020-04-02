@@ -113,9 +113,9 @@ utils/split_data.sh $dataDir/pytorch_xvectors/subsegments $nj
 modelDir=models/xvec_preTrained
 transformDir=xvectors/xvec_preTrained/train
 
-python extract.py -modelDirectory $modelDir \
-  -featDir $dataDir/pytorch_xvectors/subsegments \
-  -embeddingDir $dataDir/pytorch_xvectors
+python extract.py $modelDir \
+  $dataDir/pytorch_xvectors/subsegments \
+  $dataDir/pytorch_xvectors
 
 for f in segments utt2spk spk2utt; do
   cp $dataDir/pytorch_xvectors/subsegments/$f $dataDir/pytorch_xvectors/$f

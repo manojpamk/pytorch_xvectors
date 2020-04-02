@@ -193,14 +193,9 @@ fi
 
 if [ $stage -le 7 ]; then
 
-  python extract.py -modelDirectory $modelDir \
-    -featDir $trainFeatDir \
-    -embeddingDir $trainXvecDir
+  python extract.py $modelDir $trainFeatDir $trainXvecDir
+  python extract.py $modelDir $testFeatDir $testXvecDir
 
-  python extract.py -modelDirectory $modelDir \
-    -featDir $testFeatDir \
-    -embeddingDir $testXvecDir
-    
 fi
 
 if [ $stage -le 8 ]; then
