@@ -29,6 +29,11 @@ voxceleb1_root=vox_data/vox1
 voxceleb2_root=vox_data/vox2
 musan_root=musan
 
+modelDir=
+trainFeatDir=data/train_combined_no_sil
+trainXvecDir=xvectors/xvec_preTrained/train
+testFeatDir=data/voxceleb1_test_no_sil
+testXvecDir=xvectors/xvec_preTrained/test
 stage=1
 
 if [ $stage -le 0 ]; then
@@ -129,13 +134,13 @@ if [ $stage -le 4 ]; then
   # wasteful, as it roughly doubles the amount of training data on disk.  After
   # creating training examples, this can be removed.
   local/nnet3/xvector/prepare_feats_for_egs.sh --nj 40 --cmd "$train_cmd" \
-    data/train_combined data/train_combined_no_sil exp/train_combined_no_sil
-  utils/fix_data_dir.sh data/train_combined_no_sil
+    data/train_combined $trainFeatDir exp/train_combined_no_sil
+  utils/fix_data_dir.sh $trainFeatDir
 
   # Preparing the test features as well. This will be used only during testing
   local/nnet3/xvector/prepare_feats_for_egs.sh --nj 10 --cmd "$train_cmd" \
-    data/voxceleb1_test data/voxceleb1_test_no_sil exp/voxceleb1_test_no_sil
-  utils/fix_data_dir.sh data/voxceleb1_test_no_sil
+    data/voxceleb1_test $testFeatDir exp/voxceleb1_test_no_sil
+  utils/fix_data_dir.sh $testFeatDir
 
 fi
 
@@ -143,25 +148,25 @@ if [ $stage -le 5 ]; then
   # Now, we need to remove features that are too short after removing silence
   # frames.  We want atleast 5s (500 frames) per utterance.
   min_len=400
-  mv data/train_combined_no_sil/utt2num_frames data/train_combined_no_sil/utt2num_frames.bak
-  awk -v min_len=${min_len} '$2 > min_len {print $1, $2}' data/train_combined_no_sil/utt2num_frames.bak > data/train_combined_no_sil/utt2num_frames
-  utils/filter_scp.pl data/train_combined_no_sil/utt2num_frames data/train_combined_no_sil/utt2spk > data/train_combined_no_sil/utt2spk.new
-  mv data/train_combined_no_sil/utt2spk.new data/train_combined_no_sil/utt2spk
-  utils/fix_data_dir.sh data/train_combined_no_sil
+  mv $trainFeatDir/utt2num_frames $trainFeatDir/utt2num_frames.bak
+  awk -v min_len=${min_len} '$2 > min_len {print $1, $2}' $trainFeatDir/utt2num_frames.bak > $trainFeatDir/utt2num_frames
+  utils/filter_scp.pl $trainFeatDir/utt2num_frames $trainFeatDir/utt2spk > $trainFeatDir/utt2spk.new
+  mv $trainFeatDir/utt2spk.new $trainFeatDir/utt2spk
+  utils/fix_data_dir.sh $trainFeatDir
 
   # We also want several utterances per speaker. Now we'll throw out speakers
   # with fewer than 8 utterances.
   min_num_utts=8
-  awk '{print $1, NF-1}' data/train_combined_no_sil/spk2utt > data/train_combined_no_sil/spk2num
-  awk -v min_num_utts=${min_num_utts} '$2 >= min_num_utts {print $1, $2}' data/train_combined_no_sil/spk2num | utils/filter_scp.pl - data/train_combined_no_sil/spk2utt > data/train_combined_no_sil/spk2utt.new
-  mv data/train_combined_no_sil/spk2utt.new data/train_combined_no_sil/spk2utt
-  utils/spk2utt_to_utt2spk.pl data/train_combined_no_sil/spk2utt > data/train_combined_no_sil/utt2spk
+  awk '{print $1, NF-1}' $trainFeatDir/spk2utt > $trainFeatDir/spk2num
+  awk -v min_num_utts=${min_num_utts} '$2 >= min_num_utts {print $1, $2}' $trainFeatDir/spk2num | utils/filter_scp.pl - $trainFeatDir/spk2utt > $trainFeatDir/spk2utt.new
+  mv $trainFeatDir/spk2utt.new $trainFeatDir/spk2utt
+  utils/spk2utt_to_utt2spk.pl $trainFeatDir/spk2utt > $trainFeatDir/utt2spk
 
-  utils/filter_scp.pl data/train_combined_no_sil/utt2spk data/train_combined_no_sil/utt2num_frames > data/train_combined_no_sil/utt2num_frames.new
-  mv data/train_combined_no_sil/utt2num_frames.new data/train_combined_no_sil/utt2num_frames
+  utils/filter_scp.pl $trainFeatDir/utt2spk $trainFeatDir/utt2num_frames > $trainFeatDir/utt2num_frames.new
+  mv $trainFeatDir/utt2num_frames.new $trainFeatDir/utt2num_frames
 
   # Now we're ready to create training examples.
-  utils/fix_data_dir.sh data/train_combined_no_sil
+  utils/fix_data_dir.sh $trainFeatDir
 fi
 
 if [ $stage -le 6 ]; then
@@ -176,34 +181,31 @@ if [ $stage -le 6 ]; then
     --max-frames-per-chunk 400 \
     --num-diagnostic-archives 3 \
     --num-repeats 50 \
-    data/train_combined_no_sil exp/xvector_nnet_1a/egs/
+    $trainFeatDir exp/xvector_nnet_1a/egs/
 
   # Main DNN training
-  python train_xent.py $configFile
+  CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 \
+  train_xent.py exp/xvector_nnet_1a/egs/
+  modelDir=models/`ls -t | head -n1`
+
 fi
+
 
 if [ $stage -le 7 ]; then
 
-    # Embedding extraction
-    extractModel=`grep ^extractModel $configFile | cut -f 3 -d ' '`
-    trainFeatDir=`grep ^trainFeatDir $configFile | cut -f 3 -d ' '`
-    testFeatDir=`grep ^testFeatDir $configFile | cut -f 3 -d ' '`
-    trainXvecDir=xvectors/$extractModel/train/
-    testXvecDir=xvectors/$extractModel/test/
+  python extract.py -modelDirectory $modelDir \
+    -featDir $trainFeatDir \
+    -embeddingDir $trainXvecDir
 
+  python extract.py -modelDirectory $modelDir \
+    -featDir $testFeatDir \
+    -embeddingDir $testXvecDir
+    
 fi
 
 if [ $stage -le 8 ]; then
 
-    python extract.py $configFile
-    cat $trainXvecDir/xvector.*.scp > $trainXvecDir/xvector.scp
-    cat $testXvecDir/xvector.*.scp > $testXvecDir/xvector.scp
-
-fi
-
-if [ $stage -le 9 ]; then
-
-  # Reproducing voxceleb results  
+  # Reproducing voxceleb results
   # Compute the mean vector for centering the evaluation xvectors.
   $train_cmd $trainXvecDir/log/compute_mean.log \
     ivector-mean scp:$trainXvecDir/xvector.scp \
@@ -221,6 +223,10 @@ if [ $stage -le 9 ]; then
     ivector-compute-plda ark:$trainFeatDir/spk2utt \
     "ark:ivector-subtract-global-mean scp:$trainXvecDir/xvector.scp ark:- | transform-vec $trainXvecDir/transform.mat ark:- ark:- | ivector-normalize-length ark:-  ark:- |" \
     $trainXvecDir/plda
+
+fi
+
+if [ $stage -le 9 ]; then
 
   $train_cmd $testXvecDir/log/voxceleb1_test_scoring.log \
     ivector-plda-scoring --normalize-length=true \
