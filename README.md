@@ -90,6 +90,7 @@ The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on t
 
 ## Pretrained model
 
+#### 1. Speaker Verification
 To reproduce voxceleb EER results with the pretrained model, follow the below steps.
 NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` prior to evaluation.
 
@@ -111,6 +112,11 @@ NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` pr
    ```
    bash pytorch_run.sh
    ```
+#### 2. Speaker Diarization
+Place the audio files to diarize and their corresponding RTTM files in `demo_wav/` and `demo_rttm/` directories. Execute:
+```
+bash diarize.sh
+```
 
 ## Results
 
