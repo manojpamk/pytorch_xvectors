@@ -1,5 +1,19 @@
 ## <div align="center">Deep speaker embeddings in PyTorch</div>
 
+* [Requirements:](#requirements)
+* [Installation:](#installation)
+* [Data preparation](#data-preparation)
+* [Training](#training)
+* [Embedding extraction](#embedding-extraction)
+* [Pretrained model](#pretrained-model)
+      * [1. Speaker Verification](#1-speaker-verification)
+      * [2. Speaker Diarization](#2-speaker-diarization)
+* [Results](#results)
+      * [1. Speaker Verification](#1-speaker-verification-1)
+         * [Voxceleb1 test](#voxceleb1-test)
+         * [VOICES dev](#voices-dev)
+      * [2. Speaker Diarization (DER)](#2-speaker-diarization-der)
+
 ### Requirements:
 Python Libraries
 ```
