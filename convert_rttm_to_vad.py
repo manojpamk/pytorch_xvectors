@@ -30,7 +30,7 @@ for wavFile in sorted(os.listdir(inWavDir)):
 	wavBase = wavFile.replace('.wav','')
 	if not os.path.exists(inRttmDir+'/'+wavBase+'.rttm'):
 		print('No rttm file for %s' %wavFile)
-	print('Creating VAD file for %s' %wavBase)
+	# print('Creating VAD file for %s' %wavBase)
 	audioDur = np.round(float(os.popen('soxi -D '+inWavDir+'/'+wavFile).readlines()[0].strip('\n')),2)
 	binVad = np.zeros(int(np.ceil(frameRate*audioDur))).astype('int')
 
