@@ -17,13 +17,21 @@ readlink -f $wavDir/* > $wavList
 window=1.5
 window_period=0.75
 min_segment=0.5
+modelDir=models/xvec_preTrained
+transformDir=xvectors/xvec_preTrained/train
 
 # Evaluation parameters
+method=SC # plda or SC (spectral clustering)
 useOracleNumSpkr=1
 useCollar=1
-skipDataPrep=0
+skipDataPrep=1
 dataDir=$expDir/data
 nj=8
+
+if [[ "$method" == "SC" ]] && [[ ! -d Auto-Tuning-Spectral-Clustering ]]; then
+  echo "Please install https://github.com/tango4j/Auto-Tuning-Spectral-Clustering"
+  exit 1
+fi
 
 for f in sid steps utils local conf diarization; do
   [ ! -L $f ] && ln -s $kaldiDir/egs/voxceleb/v2/$f;
@@ -92,60 +100,94 @@ if [ "$skipDataPrep" == "0" ]; then
   cp $dataDir/segmented/segments $dataDir/segmented_cmn/segments
   utils/fix_data_dir.sh $dataDir/segmented_cmn
   utils/split_data.sh $dataDir/segmented_cmn $nj
+
+  # Compute the subsegments directory
+  utils/data/get_uniform_subsegments.py \
+               --max-segment-duration=$window \
+               --overlap-duration=$(perl -e "print ($window-$window_period);") \
+               --max-remaining-duration=$min_segment \
+               --constant-duration=True \
+              $dataDir/segmented_cmn/segments > $dataDir/segmented_cmn/subsegments
+  utils/data/subsegment_data_dir.sh $dataDir/segmented_cmn \
+    $dataDir/segmented_cmn/subsegments $dataDir/pytorch_xvectors/subsegments
+  utils/split_data.sh $dataDir/pytorch_xvectors/subsegments $nj
+
+  # Extract x-vectors
+  python extract.py $modelDir \
+    $dataDir/pytorch_xvectors/subsegments \
+    $dataDir/pytorch_xvectors
+
+  for f in segments utt2spk spk2utt; do
+    cp $dataDir/pytorch_xvectors/subsegments/$f $dataDir/pytorch_xvectors/$f
+  done
+
 else
-  [ ! -d $dataDir/segmented_cmn ] && echo "Cannot find features" && exit 1
+  [ ! -f $dataDir/pytorch_xvectors/xvector.scp ] && echo "Cannot find features" && exit 1
 fi
 
-# Compute the subsegments directory
-utils/data/get_uniform_subsegments.py \
-             --max-segment-duration=$window \
-             --overlap-duration=$(perl -e "print ($window-$window_period);") \
-             --max-remaining-duration=$min_segment \
-             --constant-duration=True \
-            $dataDir/segmented_cmn/segments > $dataDir/segmented_cmn/subsegments
-utils/data/subsegment_data_dir.sh $dataDir/segmented_cmn \
-  $dataDir/segmented_cmn/subsegments $dataDir/pytorch_xvectors/subsegments
-utils/split_data.sh $dataDir/pytorch_xvectors/subsegments $nj
+if [ "$method" == "plda" ]; then
 
-# Extract x-vectors
-modelDir=models/xvec_preTrained
-transformDir=xvectors/xvec_preTrained/train
+  diarization/nnet3/xvector/score_plda.sh --nj 16 \
+               --cmd "$train_cmd" \
+               $transformDir \
+               $dataDir/pytorch_xvectors \
+               $expDir/plda/scoring
 
-python extract.py $modelDir \
-  $dataDir/pytorch_xvectors/subsegments \
-  $dataDir/pytorch_xvectors
+  diarization/cluster.sh --nj 8 \
+               --cmd "$train_cmd --mem 5G" \
+               --reco2num-spk $dataDir/reco2num_spk \
+               $expDir/plda/scoring \
+               $expDir/plda/clustering_oracleNumSpkr/rttm
 
-for f in segments utt2spk spk2utt; do
-  cp $dataDir/pytorch_xvectors/subsegments/$f $dataDir/pytorch_xvectors/$f
-done
+  diarization/cluster.sh --nj 8 \
+               --cmd "$train_cmd --mem 5G" \
+               --threshold 0 \
+               $expDir/plda/scoring \
+               $expDir/SC/clustering_estNumSpkr/rttm
 
-diarization/nnet3/xvector/score_plda.sh --nj 16 \
-             --cmd "$train_cmd" \
-             $transformDir \
-             $dataDir/pytorch_xvectors \
-             $dataDir/pytorch_xvectors/scoring
+else
 
-diarization/cluster.sh --nj 8 \
-             --cmd "$train_cmd --mem 5G" \
-             --reco2num-spk $dataDir/reco2num_spk \
-             $dataDir/pytorch_xvectors/scoring \
-             $dataDir/pytorch_xvectors/clustering_oracleNumSpkr
+  # Compute the cosine affinity
+  cd Auto-Tuning-Spectral-Clustering/sc_utils
+  bash score_embedding.sh --cmd "$train_cmd" --nj 16 \
+               --python_env ~/virtualenv/keras_fixed/bin/activate \
+               --score_metric cos --out_dir $expDir/SC/cos_scores  \
+               $dataDir/pytorch_xvectors $expDir/SC/cos_scores
+  cd ..
 
-diarization/cluster.sh --nj 8 \
-             --cmd "$train_cmd --mem 5G" \
-             --threshold 0 \
-             $dataDir/pytorch_xvectors/scoring \
-             $dataDir/pytorch_xvectors/clustering_estNumSpkr
+  # Perform spectral clustering
+  python spectral_opt.py --affinity_score_file $expDir/SC/cos_scores/scores.scp \
+               --threshold 'None' --score_metric "cos" --max_speaker 10 \
+               --spt_est_thres 'NMESC' --reco2num_spk $dataDir/reco2num_spk \
+               --segment_file_input_path $dataDir/pytorch_xvectors/segments \
+               --spk_labels_out_path $expDir/SC/labels_oracleNumSpkr \
+               --sparse_search True
+  mkdir -p $expDir/SC/clustering_oracleNumSpkr
+  python sc_utils/make_rttm.py $dataDir/pytorch_xvectors/segments \
+    $expDir/SC/labels_oracleNumSpkr $expDir/SC/clustering_oracleNumSpkr/rttm
+
+  python spectral_opt.py --affinity_score_file $expDir/SC/cos_scores/scores.scp \
+               --threshold 'None' --score_metric "cos" --max_speaker 10 \
+               --spt_est_thres 'NMESC' \
+               --segment_file_input_path $dataDir/pytorch_xvectors/segments \
+               --spk_labels_out_path $expDir/SC/labels_estNumSpkr \
+               --sparse_search True
+  mkdir -p $expDir/SC/clustering_estNumSpkr
+  python sc_utils/make_rttm.py $dataDir/pytorch_xvectors/segments \
+    $expDir/SC/labels_estNumSpkr $expDir/SC/clustering_estNumSpkr/rttm
+  cd ..
+
+fi
 
 # Evaluation
 echo "DER with Oracle #Spkrs"
-perl md-eval.py $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $dataDir/pytorch_xvectors/clustering_oracleNumSpkr) \
+perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
+  -s <(sed "s/-rec / /g" $expDir/SC/clustering_oracleNumSpkr/rttm) \
   2>&1 | grep -v WARNING | grep OVERALL
 
 echo "DER with Estimated #Spkrs"
-perl md-eval.py $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $dataDir/pytorch_xvectors/clustering_estNumSpkr) \
+perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
+  -s <(sed "s/-rec / /g" $expDir/$method/clustering_estNumSpkr/rttm) \
   2>&1 | grep -v WARNING | grep OVERALL
 
 rm $wavList
