@@ -9,6 +9,7 @@ kaldi-io==0.9.1
 kaldi-python-io==1.0.4
 ```
 
+
 ### Installation:
 * Install the python libraries listed in [Requirements](#requirements)
 * Install the Kaldi toolkit: https://github.com/kaldi-asr/kaldi/blob/master/INSTALL
@@ -122,16 +123,26 @@ bash diarize.sh
 
 #### 1. Speaker Verification
 
-|         | Kaldi           | pytorch_spkembed  |
+##### Voxceleb1 test
+
+|         | Kaldi           | pytorch_xvectors  |
 |:-------------|:-------------:|:-----:|
 | EER      | 3.128% | 2.815% |
 | minDCF(p=0.01)      | 0.3258      |   0.3110 |
 | minDCF(p=0.001) | 0.5003      |    0.4102 |
 
+##### VOICES dev
+
+|         | Kaldi           | pytorch_xvectors  |
+|:-------------|:-------------:|:-----:|
+| EER      | 10.3% | 8.591% |
+| minDCF(p=0.01)      | 0.7845      |   0.6961 |
+| minDCF(p=0.001) | 0.9406      |    0.8934 |
+
 
 #### 2. Speaker Diarization (DER)
 
-|         | Kaldi           | pytorch_spkembed  |
+|         | Kaldi           | pytorch_xvectors  |
 |:-------------|:-------------:|:-----:|
 | DIHARD2 dev (no collar, oracle #spk)      | 25.38% | 26.48% |
 | DIHARD2 dev (no collar, est #spk)      | 32.96% | 32.81% |
