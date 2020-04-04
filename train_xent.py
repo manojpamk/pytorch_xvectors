@@ -121,7 +121,7 @@ while step <= totalSteps:
     for x in net.modules():
         if isinstance(x, torch.nn.Dropout):
             x.p = p_drop
-    print('Dropout updated to %f' %p_drop_inst)
+    print('Dropout updated to %f' %p_drop)
 
     # Save checkpoint
     torch.save({
