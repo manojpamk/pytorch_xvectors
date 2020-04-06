@@ -3,16 +3,14 @@
 : ' Date Created: Mar 30 2020
     Perform speaker diarization using pytorch embeddings
 
-    All numbers in % DER: (oracle #spkr, estimated #spkr)
+    All numbers in %meanDER: (oracle #spkr, estimated #spkr)
     DIHARD2-dev:
-      PLDA: (26.48, 32.81)
-      SC:   (27.87, 24.12)
+      PLDA: (26.2531, 33.4166)
+      SC:   (27.5023, 24.6623)
 
     AMI:
       PLDA:
       SC:
-
-
 
 '
 
@@ -30,7 +28,7 @@ window=1.5
 window_period=0.75
 min_segment=0.5
 modelDir=models/xvec_preTrained
-transformDir=xvectors/xvec_preTrained/train
+transformDir=../xvectors/xvec_preTrained/train
 
 # Evaluation parameters
 method=SC # plda or SC (spectral clustering)
@@ -126,9 +124,11 @@ if [ "$skipDataPrep" == "0" ]; then
   utils/split_data.sh $dataDir/pytorch_xvectors/subsegments $nj
 
   # Extract x-vectors
+  cd ..
   python extract.py $modelDir \
     $dataDir/pytorch_xvectors/subsegments \
     $dataDir/pytorch_xvectors
+  cd egs/
 
   for f in segments utt2spk spk2utt; do
     cp $dataDir/pytorch_xvectors/subsegments/$f $dataDir/pytorch_xvectors/$f
@@ -193,14 +193,36 @@ else
 fi
 
 # Evaluation
-echo "DER with Oracle #Spkrs"
-perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $expDir/$method/clustering_oracleNumSpkr/rttm) \
-  2>&1 | grep -v WARNING | grep OVERALL
+printf "DER with Oracle #Spkrs: "
+rm -rf $currDir/oracle_ders.txt $currDir/oracle_rttms/
+mkdir $currDir/oracle_rttms
+cut -f 1 -d ' ' $dataDir/segments |\
+while read -s wavid; do
+    grep " ${wavid}-rec " $expDir/$method/clustering_oracleNumSpkr/rttm |\
+    sed "s/-rec//g" > $currDir/oracle_rttms/$wavid.rttm
+    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
+    -r $rttmDir/$wavid.rttm -s $currDir/oracle_rttms/$wavid.rttm 2>&1 |\
+    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
+  echo $der >> $currDir/oracle_ders.txt
+done
+meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/oracle_ders.txt`
+echo $meanDER
+rm -rf $currDir/oracle_ders.txt $cuttDir/oracle_rttms
 
-echo "DER with Estimated #Spkrs"
-perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $expDir/$method/clustering_estNumSpkr/rttm) \
-  2>&1 | grep -v WARNING | grep OVERALL
+printf "DER with Estimated #Spkrs: "
+rm -rf $currDir/est_ders.txt $currDir/est_rttms/
+mkdir $currDir/est_rttms
+cut -f 1 -d ' ' $dataDir/segments |\
+while read -s wavid; do
+    grep " ${wavid}-rec " $expDir/$method/clustering_estNumSpkr/rttm |\
+    sed "s/-rec//g" > $currDir/est_rttms/$wavid.rttm
+    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
+    -r $rttmDir/$wavid.rttm -s $currDir/est_rttms/$wavid.rttm 2>&1 |\
+    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
+  echo $der >> $currDir/est_ders.txt
+done
+meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/est_ders.txt`
+echo $meanDER
+rm -rf $currDir/est_ders.txt $cuttDir/est_rttms
 
 rm $wavList

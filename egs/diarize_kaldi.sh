@@ -3,14 +3,16 @@
 : ' Date Created: Mar 27 2020
     Perform speaker diarization using kaldi xvectors
 
-    All numbers in % DER: (oracle #spkr, estimated #spkr)
+    All numbers in %meanDER: (oracle #spkr, estimated #spkr)
     DIHARD2-dev:
-      PLDA: (25.38, 32.96)
-      SC:   (27.88, 24.54)
+      PLDA: (24.9390, 33.3898)
+      SC:   (26.9699, 24.4945)
 
     AMI:
-      PLDA:
+      PLDA: 
       SC:
+
+
 
 '
 
@@ -30,7 +32,7 @@ nnetDir=$kaldiDir/egs/voxceleb/v2/exp/xvector_nnet_1a/
 transformDir=$nnetDir/xvectors_train/
 
 # Evaluation parameters
-method=SC # plda or SC (spectral clustering)
+method=plda # plda or SC (spectral clustering)
 useOracleNumSpkr=1
 useCollar=0
 skipDataPrep=1
@@ -182,12 +184,36 @@ else
 fi
 
 # Evaluation
-echo "DER with Oracle #Spkrs"
-perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $expDir/$method/clustering_oracleNumSpkr/rttm) \
-  2>&1 | grep -v WARNING | grep OVERALL
+printf "DER with Oracle #Spkrs: "
+rm -rf $currDir/oracle_ders.txt $currDir/oracle_rttms/
+mkdir $currDir/oracle_rttms
+cut -f 1 -d ' ' $dataDir/segments |\
+while read -s wavid; do
+    grep " ${wavid}-rec " $expDir/$method/clustering_oracleNumSpkr/rttm |\
+    sed "s/-rec//g" > $currDir/oracle_rttms/$wavid.rttm
+    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
+    -r $rttmDir/$wavid.rttm -s $currDir/oracle_rttms/$wavid.rttm 2>&1 |\
+    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
+  echo $der >> $currDir/oracle_ders.txt
+done
+meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/oracle_ders.txt`
+echo $meanDER
+rm -rf $currDir/oracle_ders.txt $cuttDir/oracle_rttms
 
-echo "DER with Estimated #Spkrs"
-perl md-eval.pl $collarCmd -r <(cat $rttmDir/*) \
-  -s <(sed "s/-rec / /g" $expDir/$method/clustering_estNumSpkr/rttm) \
-  2>&1 | grep -v WARNING | grep OVERALL
+printf "DER with Estimated #Spkrs: "
+rm -rf $currDir/est_ders.txt $currDir/est_rttms/
+mkdir $currDir/est_rttms
+cut -f 1 -d ' ' $dataDir/segments |\
+while read -s wavid; do
+    grep " ${wavid}-rec " $expDir/$method/clustering_estNumSpkr/rttm |\
+    sed "s/-rec//g" > $currDir/est_rttms/$wavid.rttm
+    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
+    -r $rttmDir/$wavid.rttm -s $currDir/est_rttms/$wavid.rttm 2>&1 |\
+    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
+  echo $der >> $currDir/est_ders.txt
+done
+meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/est_ders.txt`
+echo $meanDER
+rm -rf $currDir/est_ders.txt $cuttDir/est_rttms
+
+rm $wavList
