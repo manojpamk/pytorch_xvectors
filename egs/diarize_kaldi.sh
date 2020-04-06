@@ -9,8 +9,8 @@
       SC:   (26.9699, 24.4945)
 
     AMI:
-      PLDA: 
-      SC:
+      PLDA: (9.11885, 9.05615)
+      SC:   (6.39346, 7.28769)
 
 
 
@@ -34,7 +34,7 @@ transformDir=$nnetDir/xvectors_train/
 # Evaluation parameters
 method=plda # plda or SC (spectral clustering)
 useOracleNumSpkr=1
-useCollar=0
+useCollar=1
 skipDataPrep=1
 dataDir=$expDir/data
 nj=16

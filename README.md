@@ -135,19 +135,21 @@ bash diarize.sh
 
 ## Results
 
-#### 1. Speaker Verification (EER)
+#### 1. Speaker Verification (%EER)
 
 |         | Kaldi           | pytorch_xvectors  |
 |:-------------|:-------------:|:-----:|
-| Vox1-test      | 3.128% | 2.815% |
-| VOICES-dev      | 10.3% | 8.591% |
+| Vox1-test      | 3.13 | 2.82 |
+| VOICES-dev      | 10.30 | 8.59 |
 
 
-#### 2. Speaker Diarization (DER)
+#### 2. Speaker Diarization (%DER)
+
+NOTE: Clustering using [https://github.com/tango4j/Auto-Tuning-Spectral-Clustering](https://github.com/tango4j/Auto-Tuning-Spectral-Clustering)
 
 |         | Kaldi           | pytorch_xvectors  |
 |:-------------|:-------------:|:-----:|
-| DIHARD2 dev (no collar, oracle #spk)      | 25.38% | 26.48% |
-| DIHARD2 dev (no collar, est #spk)      | 32.96% | 32.81% |
-| AMI (171 meetings, collar, oracle #spk) | 10.94% | 15.62% |
-| AMI (171 meetings, collar, est #spk) | 13.20% | 14.88% |
+| DIHARD2 dev (no collar, oracle #spk)      | 26.97 | 27.50 |
+| DIHARD2 dev (no collar, est #spk)      | 24.49 | 24.66 |
+| AMI dev+test (26 meetings, collar, oracle #spk) | 6.39 | 6.30 |
+| AMI dev+test (26 meetings, collar, est #spk) | 7.29 | 10.14 |

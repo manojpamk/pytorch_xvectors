@@ -55,7 +55,9 @@ utils/split_data.sh $featDir 8
 # Pytorch embeddings
 modelDir=$currDir/models/xvec_preTrained
 transformDir=$currDir/xvectors/xvec_preTrained/train
+cd ..
 python extract.py $modelDir $featDir $expDir/pytorch_xvectors
+cd egs/
 
 # Scoring
 $train_cmd $expDir/log_scores.log \

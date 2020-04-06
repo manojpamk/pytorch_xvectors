@@ -9,8 +9,8 @@
       SC:   (27.5023, 24.6623)
 
     AMI:
-      PLDA:
-      SC:
+      PLDA: (10.9746, 10.2846)
+      SC:   (6.295, 10.1385)
 
 '
 
@@ -31,9 +31,9 @@ modelDir=models/xvec_preTrained
 transformDir=../xvectors/xvec_preTrained/train
 
 # Evaluation parameters
-method=SC # plda or SC (spectral clustering)
+method=plda # plda or SC (spectral clustering)
 useOracleNumSpkr=1
-useCollar=0
+useCollar=1
 skipDataPrep=1
 dataDir=$expDir/data
 nj=8
