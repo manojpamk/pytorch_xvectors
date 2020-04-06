@@ -273,7 +273,7 @@ def par_core_extractXvectors(inFeatsScp, outXvecArk, outXvecScp, net, layerName)
         def hook(model, input, output):
             activation[name] = output.detach()
         return hook
-    net.fc1.register_forward_hook(get_activation(layerName))
+    eval('net.%s.register_forward_hook(get_activation(layerName))' %layerName)
 
     with kaldi_python_io.ArchiveWriter(outXvecArk, outXvecScp, matrix=False) as writer:
         with ReadHelper('scp:%s'%inFeatsScp) as reader:

@@ -135,23 +135,12 @@ bash diarize.sh
 
 ## Results
 
-#### 1. Speaker Verification
-
-##### Voxceleb1 test
+#### 1. Speaker Verification (EER)
 
 |         | Kaldi           | pytorch_xvectors  |
 |:-------------|:-------------:|:-----:|
-| EER      | 3.128% | 2.815% |
-| minDCF(p=0.01)      | 0.3258      |   0.3110 |
-| minDCF(p=0.001) | 0.5003      |    0.4102 |
-
-##### VOICES dev
-
-|         | Kaldi           | pytorch_xvectors  |
-|:-------------|:-------------:|:-----:|
-| EER      | 10.3% | 8.591% |
-| minDCF(p=0.01)      | 0.7845      |   0.6961 |
-| minDCF(p=0.001) | 0.9406      |    0.8934 |
+| Vox1-test      | 3.128% | 2.815% |
+| VOICES-dev      | 10.3% | 8.591% |
 
 
 #### 2. Speaker Diarization (DER)

@@ -47,7 +47,7 @@ eps = args.noiseEps
 
 
 # TRAINING
-while step <= totalSteps:
+while step < totalSteps:
 
     archiveI = step%args.numArchives + 1
     archive_start_time = time.time()
