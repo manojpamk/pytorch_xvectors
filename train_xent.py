@@ -24,11 +24,10 @@ torch.manual_seed(0)
 np.random.seed(0)
 
 # PARAMS, MODEL PREP
-parser = getParamsNew()
+parser = getParams()
 args = parser.parse_args()
 print(args)
 
-# params = getParams(sys.argv[1])
 totalSteps = args.numEpochs * args.numArchives
 net, optimizer, step, saveDir = prepareModel(args)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -130,6 +129,7 @@ while step < totalSteps:
         'model_state_dict': net.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': loss,
+        'args': args,
         }, '{}/checkpoint_step{}.tar'.format(saveDir, step))
 
     # Compute validation loss, update LR if using plateau rule

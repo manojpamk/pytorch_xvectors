@@ -22,17 +22,6 @@ from torch.utils.data import Dataset, IterableDataset
 from collections import OrderedDict
 
 
-def selectModel(modelType):
-    if modelType == 1:
-        net = simpleCNN()
-    if modelType == 2:
-        net = simpleLSTM()
-    if modelType == 3:
-        net = simpleTDNN()
-    if modelType == 4:
-        net = xvecTDNN()
-    return net
-
 def readHdf5File_full(fileName):
     """ Read at-once from the hdf5 file. Rarely used
         Outputs:
@@ -79,17 +68,17 @@ class myH5DL(Dataset):
 def prepareModel(args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    #torch.cuda.set_device(0)
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
     torch.backends.cudnn.benchmark = True
 
     if args.resumeTraining:
         # select the latest model from modelDir
         modelFile = max(glob.glob(args.resumeModelDir+'/*'), key=os.path.getctime)
-        if args.modelType == 3:
-            net = simpleTDNN(args.numSpkrs, p_dropout=0)
-        else:
-            net = xvecTDNN(args.numSpkrs, p_dropout=0)
+        net = eval('{}({}, p_dropout=0)'.format(args.modelType, args.numSpkrs))
+        # if args.modelType == 3:
+        #     net = simpleTDNN(args.numSpkrs, p_dropout=0)
+        # else:
+        #     net = xvecTDNN(args.numSpkrs, p_dropout=0)
         optimizer = torch.optim.Adam(net.parameters(), lr=args.baseLR)
         net.to(device)
 
@@ -124,10 +113,11 @@ def prepareModel(args):
     else:
         print('Initializing Model..')
         step = 0
-        if args.modelType == 3:
-            net = simpleTDNN(args.numSpkrs, p_dropout=0)
-        else:
-            net = xvecTDNN(args.numSpkrs, p_dropout=0)
+        net = eval('{}({}, p_dropout=0)'.format(args.modelType, args.numSpkrs))
+        # if args.modelType == 3:
+        #     net = simpleTDNN(args.numSpkrs, p_dropout=0)
+        # else:
+        #     net = xvecTDNN(args.numSpkrs, p_dropout=0)
 
         optimizer = torch.optim.Adam(net.parameters(), lr=args.baseLR)
         net.to(device)
@@ -144,14 +134,14 @@ def prepareModel(args):
     return net, optimizer, step, saveDir
 
 
-def getParamsNew():
+def getParams():
     parser = argparse.ArgumentParser()
 
     # PyTorch distributed run
     parser.add_argument("--local_rank", type=int, default=0)
 
     # General Parameters
-    parser.add_argument('-modelType', default=4, type=int, help='Refer train_utils.py')
+    parser.add_argument('-modelType', default='xvecTDNN', help='Model class. Check models.py')
     parser.add_argument('-featDim', default=30, type=int, help='Frame-level feature dimension')
     parser.add_argument('-resumeTraining', default=0, type=int,
         help='(1) Resume training, or (0) Train from scratch')
@@ -180,62 +170,16 @@ def getParamsNew():
     return parser
 
 
-def getParams(configFile):
-
-    paramDict = {}
-    config = configparser.ConfigParser()
-    config.read(configFile)
-    paramDict['modelType'] = int(config['General']['modelType'])
-    paramDict['featDim'] = int(config['General']['featDim'])
-    paramDict['trainFullXvector'] = config['General'].getboolean('trainFullXvector')
-    paramDict['resumeTraining'] = config['General'].getboolean('resumeTraining')
-    paramDict['resumeModelDir'] = config['General']['resumeModelDir']
-
-    if paramDict['trainFullXvector']:
-        paramDict['numArchives'] = int(config['fullXvector']['numArchives'])
-        paramDict['numSpkrs'] = int(config['fullXvector']['numSpkrs'])
-        paramDict['logStepSize'] = int(config['fullXvector']['logStepSize'])
-        paramDict['batchSize'] = int(config['fullXvector']['batchSize'])
-        paramDict['numEgsPerArk'] = int(config['fullXvector']['numEgsPerArk'])
-        paramDict['egsDir'] = config['fullXvector']['egsDir']
-    else:
-        paramDict['numArchives'] = int(config['toyXvector']['numArchives'])
-        paramDict['numSpkrs'] = int(config['toyXvector']['numSpkrs'])
-        paramDict['logStepSize'] = int(config['toyXvector']['logStepSize'])
-        paramDict['batchSize'] = int(config['toyXvector']['batchSize'])
-        paramDict['numEgsPerArk'] = int(config['toyXvector']['numEgsPerArk'])
-        paramDict['egsDir'] = config['toyXvector']['egsDir']
-
-    # Training params
-    paramDict['preFetchRatio'] = int(config['Training']['preFetchRatio'])
-    paramDict['optim_momentum'] = float(config['Optimizer']['momentum'])
-    paramDict['base_lr'] = float(config['Optimizer']['base_lr'])
-    paramDict['max_lr'] = float(config['Optimizer']['max_lr'])
-    paramDict['numEpochs'] = int(config['Training']['numEpochs'])
-    paramDict['noise_eps'] = float(config['Training']['noise_eps'])
-    paramDict['p_drop_max'] = float(config['Training']['p_drop_max'])
-    paramDict['step_frac'] = float(config['Training']['step_frac'])
-
-    # Extraction params
-    paramDict['extractModelName'] = 'models/'+config['Extraction']['extractModel']
-    paramDict['extractModelDir'] = paramDict['extractModelName']
-    paramDict['trainFeatDir'] = config['Extraction']['trainFeatDir']
-    paramDict['testFeatDir'] = config['Extraction']['testFeatDir']
-    paramDict['trainXvecDir'] = config['Extraction']['trainXvecDir']
-    paramDict['testXvecDir'] = config['Extraction']['testXvecDir']
-
-    return paramDict
-
-
 def computeValidAccuracy(params, modelDir):
     """ Computes frame-level validation accruacy
     """
     modelFile = max(glob.glob(modelDir+'/*'), key=os.path.getctime)
     # Load the model
-    if args.modelType == 3:
-       net = simpleTDNN(args.numSpkrs, p_dropout=0)
-    else:
-        net = xvecTDNN(args.numSpkrs, p_dropout=0)
+    net = eval('{}({}, p_dropout=0)'.format(args.modelType, args.numSpkrs))
+    # if args.modelType == 3:
+    #    net = simpleTDNN(args.numSpkrs, p_dropout=0)
+    # else:
+    #     net = xvecTDNN(args.numSpkrs, p_dropout=0)
 
     checkpoint = torch.load(modelFile,map_location=torch.device('cuda'))
     new_state_dict = OrderedDict()
