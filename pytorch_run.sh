@@ -13,7 +13,7 @@ voxcelebDir=/home/manoj/kaldi/egs/voxceleb/v2/
 configFile=local.config
 
 # Get symlinks, if not present
-for f in sid steps utils local; do
+for f in sid steps utils local conf; do
   [ ! -L $f ] && ln -s $voxcelebDir/$f;
 done
 
