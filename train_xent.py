@@ -114,9 +114,9 @@ while step < totalSteps:
     print('Archive processing time: %1.3f' %(time.time()-archive_start_time))
     # Update dropout
     if 1.0*step < args.stepFrac*totalSteps:
-        p_drop = args.pDropMax*step*args.stepFrac/totalSteps
+        p_drop = args.pDropMax*step/(args.stepFrac*totalSteps)
     else:
-        p_drop = max(0,args.pDropMax*(totalSteps + args.stepFrac - 2*step)/(totalSteps - totalSteps*args.stepFrac)) # fast decay
+        p_drop = max(0,args.pDropMax*(2*step - totalSteps(args.stepFrac+1))/(totalSteps*(args.stepFrac-1))) # fast decay
     for x in net.modules():
         if isinstance(x, torch.nn.Dropout):
             x.p = p_drop
