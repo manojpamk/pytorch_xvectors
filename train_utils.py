@@ -170,7 +170,7 @@ def getParams():
     return parser
 
 
-def computeValidAccuracy(params, modelDir):
+def computeValidAccuracy(args, modelDir):
     """ Computes frame-level validation accruacy
     """
     modelFile = max(glob.glob(modelDir+'/*'), key=os.path.getctime)
