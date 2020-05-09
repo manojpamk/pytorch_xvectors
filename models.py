@@ -99,7 +99,11 @@ class xvecTDNN(nn.Module):
         x = self.dropout_tdnn5(self.bn_tdnn5(F.relu(self.tdnn5(x))))
 
         if self.training:
-            x = x + torch.randn(x.size()).cuda()*eps
+            shape=x.size()
+            noise = torch.cuda.FloatTensor(shape) if torch.cuda.is_available() else torch.FloatTensor(shape)
+            torch.randn(shape, out=noise)
+            x += noise*eps
+
         stats = torch.cat((x.mean(dim=2), x.std(dim=2)), dim=1)
         x = self.dropout_fc1(self.bn_fc1(F.relu(self.fc1(stats))))
         x = self.dropout_fc2(self.bn_fc2(F.relu(self.fc2(x))))
