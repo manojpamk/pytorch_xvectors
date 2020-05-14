@@ -105,13 +105,19 @@ The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on t
 
 ## Pretrained model
 
+Two ways to download the pre-trained model:
+1. Google Drive [link](https://drive.google.com/file/d/1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ/view?usp=sharing) *(or)*
+2. Command line ([reference](https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99))
+    ```
+    wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ" -O preTrainedModel.zip && rm -rf /tmp/cookies.txt
+    ```
+
 #### 1. Speaker Verification
 To reproduce voxceleb EER results with the pretrained model, follow the below steps.
 NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` prior to evaluation.
 
-1) Download the [model](https://drive.google.com/file/d/1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ/view?usp=sharing)
-2) Extract `models/` and `xvectors/` into the installation directory
-3) Set the following variables in [pytorch_run.sh](pytorch_run.sh):
+1) Extract `models/` and `xvectors/` from the pre-trained archive into the installation directory
+2) Set the following variables in [pytorch_run.sh](pytorch_run.sh):
     ```
     modelDir=models/xvec_preTrained
     trainFeatDir=data/train_combined_no_sil
@@ -119,11 +125,11 @@ NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` pr
     testFeatDir=data/voxceleb1_test_no_sil
     testXvecDir=xvectors/xvec_preTrained/test
     ```
-4) Extract embeddings and compute EER, minDCF. Set `stage=7` in [pytorch_run.sh](pytorch_run.sh) and execute:
+3) Extract embeddings and compute EER, minDCF. Set `stage=7` in [pytorch_run.sh](pytorch_run.sh) and execute:
    ```
    bash pytorch_run.sh
    ```
-5) Alternatively, pretrained PLDA model is available inside `xvectors/train` directory. Set `stage=9` in [pytorch_run.sh](pytorch_run.sh) and execute:
+4) Alternatively, pretrained PLDA model is available inside `xvectors/train` directory. Set `stage=9` in [pytorch_run.sh](pytorch_run.sh) and execute:
    ```
    bash pytorch_run.sh
    ```
