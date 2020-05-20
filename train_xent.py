@@ -116,7 +116,7 @@ while step < totalSteps:
     if 1.0*step < args.stepFrac*totalSteps:
         p_drop = args.pDropMax*step/(args.stepFrac*totalSteps)
     else:
-        p_drop = max(0,args.pDropMax*(2*step - totalSteps(args.stepFrac+1))/(totalSteps*(args.stepFrac-1))) # fast decay
+        p_drop = max(0,args.pDropMax*(2*step - totalSteps*(args.stepFrac+1))/(totalSteps*(args.stepFrac-1))) # fast decay
     for x in net.modules():
         if isinstance(x, torch.nn.Dropout):
             x.p = p_drop
