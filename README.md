@@ -27,9 +27,9 @@ kaldi-python-io==1.0.4
 ### Installation:
 
 * Install the python libraries listed in [Requirements](#requirements)
-* Install the [Kaldi toolkit]( https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
-* This repository is tested with commit hash `9b4dc93c9` of the above Kaldi repository.
-* Kaldi is recommended to be installed in `$HOME/kaldi.`
+* Install [Kaldi toolkit](https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
+* This repository is tested with commit hash `9b4dc93c9` of the above [Kaldi repository](https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
+* Kaldi is recommended to be installed in `$HOME/kaldi`.
 * Download this repository. NOTE: Destination need not be inside Kaldi installation.
 * Set the `voxcelebDir` variable inside [pytorch_run.sh](pytorch_run.sh)
 
@@ -43,7 +43,7 @@ kaldi-python-io==1.0.4
 
 #### Dataset for data augmentation
 
-pytorch_run.sh script augments the training data using the following two datasets.
+[pytorch_run.sh](pytorch_run.sh) script augments the training data using the following two datasets.
 * Download [MUSAN](https://openslr.org/17/) and extract to ./musan.
 * Download [RIRS_NOISES](https://openslr.org/28/) and extract to ./RIRS_NOISES.
 
