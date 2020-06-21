@@ -19,7 +19,7 @@ Python Libraries
 ```
 python==3.6.10
 torch==1.4.0
-kaldi-io==0.9.1
+kaldiio==2.15.1
 kaldi-python-io==1.0.4
 ```
 
@@ -38,7 +38,7 @@ kaldi-python-io==1.0.4
 #### Training data preparation
 
 * Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py). 
-* The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. Features for embedding extraction are expected in Kaldi matrix format, read using the [kaldi_io](https://github.com/vesis84/kaldi-io-for-python) library. 
+* The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. 
 * Extracted embeddings are written in Kaldi vector format, similar to `xvector.ark`.
 
 #### Dataset for data augmentation

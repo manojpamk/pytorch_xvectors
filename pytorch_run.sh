@@ -1,8 +1,8 @@
-
+# Grabs Kaldi directory and replace the first line of path.sh
 EXPORT_LINE="export KALDI_ROOT=$HOME/kaldi"
 sed -i '1c\'"$EXPORT_LINE" path.sh
 
-voxcelebDir="$KALDI"/egs/voxceleb/v2/
+voxcelebDir=$HOME/kaldi/egs/voxceleb/v2/
 configFile=local.config
 
 # Get symlinks, if not present
@@ -21,13 +21,14 @@ voxceleb1_trials=data/voxceleb1_test/trials
 voxceleb1_root=/path/to/VOXCELEB1
 voxceleb2_root=/path/to/VOXCELEB2
 musan_root=$PWD/musan
+RIRS_NOISES_root=$PWD/RIRS_NOISES
 
 modelDir=models/xvec_preTrained
 trainFeatDir=data/train_combined_no_sil
 trainXvecDir=xvectors/xvec_preTrained/train
 testFeatDir=data/voxceleb1_test_no_sil
 testXvecDir=xvectors/xvec_preTrained/test
-stage=0
+stage=7
 
 if [ $stage -le 0 ]; then
    if [ "$voxceleb1_root" = "/path/to/VOXCELEB1" ] || [ "$voxceleb2_root" = "path/to/VOXCELEB2" ]; then
@@ -66,16 +67,15 @@ if [ $stage -le 2 ]; then
   frame_shift=0.01
   awk -v frame_shift=$frame_shift '{print $1, $2*frame_shift;}' data/train/utt2num_frames > data/train/reco2dur
 
-
-  if [[ -f "./RIRS_NOISES" ]]; then
+  if [[ ! -d "$RIRS_NOISES_root" ]]; then
       echo "ERROR: RIRS_NOISES noise dataset directory is not setup."
       exit 1
   fi
 
   # Make a version with reverberated speech
   rvb_opts=()
-  rvb_opts+=(--rir-set-parameters "0.5, RIRS_NOISES/simulated_rirs/smallroom/rir_list")
-  rvb_opts+=(--rir-set-parameters "0.5, RIRS_NOISES/simulated_rirs/mediumroom/rir_list")
+  rvb_opts+=(--rir-set-parameters "0.5, $RIRS_NOISES_root/simulated_rirs/smallroom/rir_list")
+  rvb_opts+=(--rir-set-parameters "0.5, $RIRS_NOISES_root/simulated_rirs/mediumroom/rir_list")
 
   # Make a reverberated version of the VoxCeleb2 list.  Note that we don't add any
   # additive noise here.
@@ -95,7 +95,7 @@ if [ $stage -le 2 ]; then
   # Prepare the MUSAN corpus, which consists of music, speech, and noise
   # suitable for augmentation.
   
-  if [[ -f "./musan" ]]; then
+  if [[ ! -d "$musan_root" ]]; then
       echo "ERROR: MUSAN noise dataset directory is not setup."
       exit 1
   fi
