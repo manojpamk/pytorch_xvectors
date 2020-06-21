@@ -25,14 +25,28 @@ kaldi-python-io==1.0.4
 
 
 ### Installation:
+
 * Install the python libraries listed in [Requirements](#requirements)
-* Install the Kaldi toolkit: https://github.com/kaldi-asr/kaldi/blob/master/INSTALL
+* Install the [Kaldi toolkit]( https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
+* This repository is tested with commit hash `9b4dc93c9` of the above Kaldi repository.
+* Kaldi is recommended to be installed in `$HOME/kaldi.`
 * Download this repository. NOTE: Destination need not be inside Kaldi installation.
 * Set the `voxcelebDir` variable inside [pytorch_run.sh](pytorch_run.sh)
 
 ### Data preparation
 
-Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py). The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. Features for embedding extraction are expected in Kaldi matrix format, read using the [kaldi_io](https://github.com/vesis84/kaldi-io-for-python) library. Extracted embeddings are written in Kaldi vector format, similar to `xvector.ark`.
+#### Training data preparation
+
+* Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py). 
+* The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. Features for embedding extraction are expected in Kaldi matrix format, read using the [kaldi_io](https://github.com/vesis84/kaldi-io-for-python) library. 
+* Extracted embeddings are written in Kaldi vector format, similar to `xvector.ark`.
+
+#### Dataset for data augmentation
+
+pytorch_run.sh script augments the training data using the following two datasets.
+* Download [MUSAN](https://openslr.org/17/) and extract to ./musan.
+* Download [RIRS_NOISES](https://openslr.org/28/) and extract to ./RIRS_NOISES.
+
 
 ### Training
 ```
