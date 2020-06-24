@@ -1,15 +1,8 @@
-#!/bin/bash
-# Copyright   2017   Johns Hopkins University (Author: Daniel Garcia-Romero)
-#             2017   Johns Hopkins University (Author: Daniel Povey)
-#        2017-2018   David Snyder
-#             2018   Ewald Enzinger
-#             2020   Manoj Kumar
-# Apache 2.0.
-#
-# See ../README.txt for more info on data required.
-# Results (mostly equal error-rates) are inline in comments below.
+# Grabs Kaldi directory and replace the first line of path.sh
+EXPORT_LINE="export KALDI_ROOT=$HOME/kaldi"
+sed -i '1c\'"$EXPORT_LINE" path.sh
 
-voxcelebDir=/home/manoj/kaldi/egs/voxceleb/v2/
+voxcelebDir=$HOME/kaldi/egs/voxceleb/v2/
 configFile=local.config
 
 # Get symlinks, if not present
@@ -25,20 +18,26 @@ vaddir=mfcc
 
 # The trials file is downloaded by local/make_voxceleb1_v2.pl.
 voxceleb1_trials=data/voxceleb1_test/trials
-voxceleb1_root=vox_data/vox1
-voxceleb2_root=vox_data/vox2
-musan_root=musan
+voxceleb1_root=/path/to/VOXCELEB1
+voxceleb2_root=/path/to/VOXCELEB2
+musan_root=$PWD/musan
+RIRS_NOISES_root=$PWD/RIRS_NOISES
 
-modelDir=
+modelDir=models/xvec_preTrained
 trainFeatDir=data/train_combined_no_sil
 trainXvecDir=xvectors/xvec_preTrained/train
 testFeatDir=data/voxceleb1_test_no_sil
 testXvecDir=xvectors/xvec_preTrained/test
-stage=1
+stage=7
 
 if [ $stage -le 0 ]; then
+   if [ "$voxceleb1_root" = "/path/to/VOXCELEB1" ] || [ "$voxceleb2_root" = "path/to/VOXCELEB2" ]; then
+         echo "ERROR: VOXCELEB1&2 data path should be specified."
+         exit 1
+   fi
   local/make_voxceleb2.pl $voxceleb2_root dev data/voxceleb2_train
   local/make_voxceleb2.pl $voxceleb2_root test data/voxceleb2_test
+  
   # This script creates data/voxceleb1_test and data/voxceleb1_train for latest version of VoxCeleb1.
   # Our evaluation set is the test portion of VoxCeleb1.
   local/make_voxceleb1_v2.pl $voxceleb1_root dev data/voxceleb1_train
@@ -68,10 +67,15 @@ if [ $stage -le 2 ]; then
   frame_shift=0.01
   awk -v frame_shift=$frame_shift '{print $1, $2*frame_shift;}' data/train/utt2num_frames > data/train/reco2dur
 
+  if [[ ! -d "$RIRS_NOISES_root" ]]; then
+      echo "ERROR: RIRS_NOISES noise dataset directory is not setup."
+      exit 1
+  fi
+
   # Make a version with reverberated speech
   rvb_opts=()
-  rvb_opts+=(--rir-set-parameters "0.5, RIRS_NOISES/simulated_rirs/smallroom/rir_list")
-  rvb_opts+=(--rir-set-parameters "0.5, RIRS_NOISES/simulated_rirs/mediumroom/rir_list")
+  rvb_opts+=(--rir-set-parameters "0.5, $RIRS_NOISES_root/simulated_rirs/smallroom/rir_list")
+  rvb_opts+=(--rir-set-parameters "0.5, $RIRS_NOISES_root/simulated_rirs/mediumroom/rir_list")
 
   # Make a reverberated version of the VoxCeleb2 list.  Note that we don't add any
   # additive noise here.
@@ -90,6 +94,11 @@ if [ $stage -le 2 ]; then
 
   # Prepare the MUSAN corpus, which consists of music, speech, and noise
   # suitable for augmentation.
+  
+  if [[ ! -d "$musan_root" ]]; then
+      echo "ERROR: MUSAN noise dataset directory is not setup."
+      exit 1
+  fi
   steps/data/make_musan.sh --sampling-rate 16000 $musan_root data
 
   # Get the duration of the MUSAN recordings.  This will be used by the

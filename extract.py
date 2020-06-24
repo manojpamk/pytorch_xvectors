@@ -31,7 +31,12 @@ def main():
     parser.add_argument('embeddingDir', help='Output directory')
     args = parser.parse_args()
 
-    modelFile = max(glob.glob(args.modelDirectory+'/*'), key=os.path.getctime)
+    try:
+        modelFile = max(glob.glob(args.modelDirectory+'/*'), key=os.path.getctime)
+    except ValueError:
+        print("[ERROR] No trained model has been found in {}.".format(args.modelDirectory) )
+        sys.exit(1)
+
     # Load model definition
     if args.modelType == 3:
         net = simpleTDNN(args.numSpkrs, p_dropout=0)
@@ -55,12 +60,14 @@ def main():
     try:
         nSplits = int(sorted(glob.glob(args.featDir+'/split*'),
                   key=getSplitNum)[-1].split('/')[-1].lstrip('split'))
-    except:
-        print('Cannot find %s/splitN directory' %args.featDir)
+    except ValueError:
+        print('[ERROR] Cannot find %s/splitN directory' %args.featDir)
         sys.exit(1)
 
     if not os.path.isdir(args.embeddingDir):
         os.makedirs(args.embeddingDir)
+        
+    print('Extracting xvectors by distributing jobs to pool workers... ')
     nProcs = nSplits
     L = [('%s/split%d/%d/feats.scp' %(args.featDir, nSplits, i),
         '%s/xvector.%d.ark' %(args.embeddingDir, i),
@@ -68,7 +75,9 @@ def main():
     pool2 = Pool(processes=nProcs)
     result = pool2.starmap(par_core_extractXvectors, L )
     pool2.terminate()
-
+    print('Multithread job has been finished.')
+    
+    print('Writing xvectors to {}'.format(args.embeddingDir))
     os.system('cat %s/xvector.*.scp > %s/xvector.scp' %(args.embeddingDir, args.embeddingDir))
 
 if __name__ == "__main__":
