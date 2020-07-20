@@ -2,18 +2,6 @@
 
 : ' Date Created: Mar 27 2020
     Perform speaker diarization using kaldi xvectors
-
-    All numbers in %meanDER: (oracle #spkr, estimated #spkr)
-    DIHARD2-dev:
-      PLDA: (24.9390, 33.3898)
-      SC:   (26.9699, 24.4945)
-
-    AMI:
-      PLDA: (9.11885, 9.05615)
-      SC:   (6.39346, 7.28769)
-
-
-
 '
 
 currDir=$PWD
@@ -41,6 +29,11 @@ nj=16
 
 if [[ "$method" == "SC" ]] && [[ ! -d Auto-Tuning-Spectral-Clustering ]]; then
   echo "Please install https://github.com/tango4j/Auto-Tuning-Spectral-Clustering"
+  exit 1
+fi
+
+if [[ ! -d dscore ]]; then
+  echo "Please install https://github.com/nryant/dscore"
   exit 1
 fi
 
@@ -180,40 +173,23 @@ else
     $expDir/SC/labels_estNumSpkr $expDir/SC/clustering_estNumSpkr/rttm
   cd ..
 
-
 fi
 
+
 # Evaluation
-printf "DER with Oracle #Spkrs: "
-rm -rf $currDir/oracle_ders.txt $currDir/oracle_rttms/
-mkdir $currDir/oracle_rttms
-cut -f 1 -d ' ' $dataDir/segments |\
-while read -s wavid; do
-    grep " ${wavid}-rec " $expDir/$method/clustering_oracleNumSpkr/rttm |\
-    sed "s/-rec//g" > $currDir/oracle_rttms/$wavid.rttm
-    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
-    -r $rttmDir/$wavid.rttm -s $currDir/oracle_rttms/$wavid.rttm 2>&1 |\
-    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
-  echo $der >> $currDir/oracle_ders.txt
-done
-meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/oracle_ders.txt`
-echo $meanDER
-rm -rf $currDir/oracle_ders.txt $cuttDir/oracle_rttms
 
-printf "DER with Estimated #Spkrs: "
-rm -rf $currDir/est_ders.txt $currDir/est_rttms/
-mkdir $currDir/est_rttms
-cut -f 1 -d ' ' $dataDir/segments |\
-while read -s wavid; do
-    grep " ${wavid}-rec " $expDir/$method/clustering_estNumSpkr/rttm |\
-    sed "s/-rec//g" > $currDir/est_rttms/$wavid.rttm
-    der=`perl /home/manoj/kaldi/tools/sctk-2.4.10/bin/md-eval.pl $collarCmd \
-    -r $rttmDir/$wavid.rttm -s $currDir/est_rttms/$wavid.rttm 2>&1 |\
-    grep "OVERALL" | cut -f 2 -d '=' | cut -f 2 -d ' '`
-  echo $der >> $currDir/est_ders.txt
-done
-meanDER=`awk '{sum += $1} END {print sum/NR}' $currDir/est_ders.txt`
-echo $meanDER
-rm -rf $currDir/est_ders.txt $cuttDir/est_rttms
+sed -i "s/-rec//g" $expDir/$method/clustering_oracleNumSpkr/rttm
+sed -i "s/-rec//g" $expDir/$method/clustering_estNumSpkr/rttm
 
+cd dscore/
+oracleResults=`python score.py $collarCmd -R <(ls $rttmDir/*) \
+  -S <(ls $expDir/$method/clustering_oracleNumSpkr/rttm) |\
+  grep OVERALL | tr -s ' ' | cut -f 4-5 -d ' '`
+estResults=`python score.py $collarCmd -R <(ls $rttmDir/*) \
+  -S <(ls $expDir/$method/clustering_estNumSpkr/rttm) |\
+  grep OVERALL | tr -s ' ' | cut -f 4-5 -d ' '`
+cd ..
 rm $wavList
+
+echo "DER with Oracle #Spkrs: `echo $oracleResults | cut -f 1 -d ' '`"
+echo "DER with Est #Spkrs   : `echo $estResults | cut -f 1 -d ' '`"
