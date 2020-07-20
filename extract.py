@@ -24,8 +24,9 @@ def getSplitNum(text):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-modelType', default=4, type=int, help='Refer train_utils.py ')
+    parser.add_argument('-modelType', default='xvecTDNN', help='Refer train_utils.py ')
     parser.add_argument('-numSpkrs', default=7323, type=int, help='Number of output labels for model')
+    parser.add_argument('-layerName', default='fc1', help="DNN layer for embeddings")
     parser.add_argument('modelDirectory', help='Directory containing the model checkpoints')
     parser.add_argument('featDir', help='Directory containing features ready for extraction')
     parser.add_argument('embeddingDir', help='Output directory')
@@ -38,14 +39,15 @@ def main():
         sys.exit(1)
 
     # Load model definition
-    if args.modelType == 3:
-        net = simpleTDNN(args.numSpkrs, p_dropout=0)
-    else:
-        net = xvecTDNN(args.numSpkrs, p_dropout=0)
+    net = eval('{}({}, p_dropout=0)'.format(args.modelType, args.numSpkrs))
 
     checkpoint = torch.load(modelFile,map_location=torch.device('cuda'))
     new_state_dict = OrderedDict()
-    for k, v in checkpoint['model_state_dict'].items():
+    if 'relation' in args.modelType:
+        checkpoint_dict = checkpoint['encoder_state_dict']
+    else:
+        checkpoint_dict = checkpoint['model_state_dict']
+    for k, v in checkpoint_dict.items():
         if k.startswith('module.'):
             new_state_dict[k[7:]] = v  # ugly fix to remove 'module' from key
         else:
@@ -66,19 +68,20 @@ def main():
 
     if not os.path.isdir(args.embeddingDir):
         os.makedirs(args.embeddingDir)
-        
+
     print('Extracting xvectors by distributing jobs to pool workers... ')
     nProcs = nSplits
     L = [('%s/split%d/%d/feats.scp' %(args.featDir, nSplits, i),
         '%s/xvector.%d.ark' %(args.embeddingDir, i),
-        '%s/xvector.%d.scp' %(args.embeddingDir, i), net, 'fc1' ) for i in range(1,nSplits+1)]
+        '%s/xvector.%d.scp' %(args.embeddingDir, i), net, args.layerName ) for i in range(1,nSplits+1)]
     pool2 = Pool(processes=nProcs)
     result = pool2.starmap(par_core_extractXvectors, L )
     pool2.terminate()
     print('Multithread job has been finished.')
-    
+
     print('Writing xvectors to {}'.format(args.embeddingDir))
     os.system('cat %s/xvector.*.scp > %s/xvector.scp' %(args.embeddingDir, args.embeddingDir))
+
 
 if __name__ == "__main__":
     main()
