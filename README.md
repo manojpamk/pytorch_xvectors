@@ -11,8 +11,8 @@
     * [1. Speaker Verification](#1-speaker-verification)
     * [2. Speaker Diarization](#2-speaker-diarization)
  * [Results](#results)
-    * [1. Speaker Verification (�R)](#1-speaker-verification-eer)
-    * [2. Speaker Diarization (�R)](#2-speaker-diarization-der)
+    * [1. Speaker Verification](#1-speaker-verification-eer)
+    * [2. Speaker Diarization](#2-speaker-diarization-der)
 
 ### Citation
 
