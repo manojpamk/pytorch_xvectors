@@ -1,18 +1,32 @@
 ## <div align="center">Deep speaker embeddings in PyTorch</div>
 
-* [Requirements:](#requirements)
-* [Installation:](#installation)
-* [Data preparation](#data-preparation)
-* [Training](#training)
-* [Embedding extraction](#embedding-extraction)
-* [Pretrained model](#pretrained-model)
-  * [1. Speaker Verification](#1-speaker-verification)
-  * [2. Speaker Diarization](#2-speaker-diarization)
-* [Results](#results)
-  * [1. Speaker Verification](#1-speaker-verification-1)
-    * [Voxceleb1 test](#voxceleb1-test)
-    * [VOICES dev](#voices-dev)
-  * [2. Speaker Diarization (DER)](#2-speaker-diarization-der)
+ * [Requirements:](#requirements)
+ * [Installation:](#installation)
+ * [Data preparation](#data-preparation)
+    * [Training data preparation](#training-data-preparation)
+    * [Dataset for data augmentation](#dataset-for-data-augmentation)
+ * [Training](#training)
+ * [Embedding extraction](#embedding-extraction)
+ * [Pretrained model](#pretrained-model)
+    * [1. Speaker Verification](#1-speaker-verification)
+    * [2. Speaker Diarization](#2-speaker-diarization)
+ * [Results](#results)
+    * [1. Speaker Verification (�R)](#1-speaker-verification-eer)
+    * [2. Speaker Diarization (�R)](#2-speaker-diarization-der)
+
+### Citation
+
+If you found this toolkit useful in your research, consider citing the following:
+
+```
+@misc{kumar2020designing,
+    title={Designing Neural Speaker Embeddings with Meta Learning},
+    author={Manoj Kumar and Tae Jin-Park and Somer Bishop and Catherine Lord and Shrikanth Narayanan},
+    year={2020},    
+    eprint={2007.16196},
+    archivePrefix={arXiv}  
+}
+```
 
 ### Requirements:
 Python Libraries
@@ -37,8 +51,8 @@ kaldi-python-io==1.0.4
 
 #### Training data preparation
 
-* Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py). 
-* The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them. 
+* Training features are expected in Kaldi nnet3 egs format, and read using the `nnet3EgsDL` class defined in [train_utils.py](train_utils.py).
+* The voxceleb recipe is provided in [pytorch_run.sh](pytorch_run.sh) to prepare them.
 * Extracted embeddings are written in Kaldi vector format, similar to `xvector.ark`.
 
 #### Dataset for data augmentation
@@ -117,7 +131,7 @@ optional arguments:
 ```
 The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on the voxceleb recipe on an end-to-end basis.
 
-## Pretrained model
+### Pretrained model
 
 Two ways to download the pre-trained model:
 1. Google Drive [link](https://drive.google.com/file/d/1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ/view?usp=sharing) *(or)*
@@ -153,7 +167,7 @@ Place the audio files to diarize and their corresponding RTTM files in `demo_wav
 bash diarize.sh
 ```
 
-## Results
+### Results
 
 #### 1. Speaker Verification (%EER)
 
