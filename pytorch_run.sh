@@ -1,3 +1,11 @@
+#!/bin/bash	
+# Copyright   2017   Johns Hopkins University (Author: Daniel Garcia-Romero)
+#             2017   Johns Hopkins University (Author: Daniel Povey)
+#        2017-2018   David Snyder	
+#             2018   Ewald Enzinger
+#             2020   Manoj Kumar	
+# Apache 2.0.	
+
 # Grabs Kaldi directory and replace the first line of path.sh
 EXPORT_LINE="export KALDI_ROOT=$HOME/kaldi"
 sed -i '1c\'"$EXPORT_LINE" path.sh
