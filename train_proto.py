@@ -46,7 +46,7 @@ checkParams(args)
 print(args)
 
 totalEpisodes = args.totalEpisodes
-net, optimizer, episodeI, saveDir = prepareProtoModel(args, freezeTDNN=1)
+net, optimizer, episodeI, saveDir = prepareProtoModel(args)
 currLR = optimizer.param_groups[0]['lr']
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 numBatchesPerArk = int(args.numEgsPerArk/args.batchSize)

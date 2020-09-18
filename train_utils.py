@@ -111,7 +111,7 @@ class myH5DL_sampler(Dataset):
             yield batchInd.ravel()
 
 
-def prepareModel(args, freezeTDNN=0):
+def prepareModel(args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
@@ -219,7 +219,7 @@ def prepareModel(args, freezeTDNN=0):
     return net, optimizer, step, saveDir
 
 
-def prepareProtoModel(args, freezeTDNN=0):
+def prepareProtoModel(args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
@@ -288,7 +288,7 @@ def prepareProtoModel(args, freezeTDNN=0):
     return net, optimizer, episodeI, saveDir
 
 
-def prepareRelationModel(args, freezeTDNN=0):
+def prepareRelationModel(args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.distributed.init_process_group(backend='nccl', init_method='env://')
