@@ -1,6 +1,7 @@
 ## <div align="center">Deep speaker embeddings in PyTorch</div>
 
  * [Requirements:](#requirements)
+       * [Other Tools:](#other-tools)
  * [Installation:](#installation)
  * [Data preparation](#data-preparation)
     * [Training data preparation](#training-data-preparation)
@@ -8,11 +9,21 @@
  * [Training](#training)
  * [Embedding extraction](#embedding-extraction)
  * [Pretrained model](#pretrained-model)
-    * [1. Speaker Verification](#1-speaker-verification)
-    * [2. Speaker Diarization](#2-speaker-diarization)
+    * [Downloading](#downloading)
+    * [Speaker Verification](#speaker-verification)
+    * [Speaker Diarization](#speaker-diarization)
  * [Results](#results)
-    * [1. Speaker Verification](#1-speaker-verification-eer)
-    * [2. Speaker Diarization](#2-speaker-diarization-der)
+    * [1. Speaker Verification (%R)](#1-speaker-verification-eer)
+    * [2. Speaker Diarization (%R)](#2-speaker-diarization-der)
+
+
+
+This repository contains code and models for training an x-vector speaker recognition model using Kaldi for feature preparation and PyTorch for DNN model training. MFCC feature configurations and TDNN model architecture follow the Voxceleb recipe in Kaldi (commit hash `9b4dc93c9`). Training procedures including optimizer and step count are similar to, but not exactly the same as Kaldi.
+
+Additionally, code for training meta-learning embeddings are available in [train_proto.py](train_proto.py) and [train_relation.py](train_relation.py). An overview of these models is available at [https://arxiv.org/abs/2007.16196](https://arxiv.org/abs/2007.16196) and in the below figure:
+
+![Overview: Meta Learning Models](figs/meta_learning_arch.png)
+
 
 ### Citation
 
@@ -37,15 +48,24 @@ kaldiio==2.15.1
 kaldi-python-io==1.0.4
 ```
 
+##### Other Tools:
+
+* Spectral Clustering using normalized maximum eigengap [GitHub](https://github.com/tango4j/Auto-Tuning-Spectral-Clustering)
+  * Used for speaker clustering during diarization
+* Diarization scoring tool [GitHub](https://github.com/nryant/dscore)
+  * Used for computing diarization error rate (DER)
+
+
 
 ### Installation:
 
 * Install the python libraries listed in [Requirements](#requirements)
 * Install [Kaldi toolkit](https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
-* This repository is tested with commit hash `9b4dc93c9` of the above [Kaldi repository](https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
-* Kaldi is recommended to be installed in `$HOME/kaldi`.
+  * This repository is tested with commit hash `9b4dc93c9` of the above [Kaldi repository](https://github.com/kaldi-asr/kaldi/blob/master/INSTALL).
+  * Kaldi is recommended to be installed in `$HOME/kaldi`.
 * Download this repository. NOTE: Destination need not be inside Kaldi installation.
 * Set the `voxcelebDir` variable inside [pytorch_run.sh](pytorch_run.sh)
+* (Optional) Install Other Tools listering in [Requirements](#requirements)
 
 ### Data preparation
 
@@ -133,6 +153,7 @@ The script [pytorch_run.sh](pytorch_run.sh) can be used to train embeddings on t
 
 ### Pretrained model
 
+#### Downloading
 Two ways to download the pre-trained model:
 1. Google Drive [link](https://drive.google.com/file/d/1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ/view?usp=sharing) *(or)*
 2. Command line ([reference](https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99))
@@ -140,7 +161,7 @@ Two ways to download the pre-trained model:
     wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1gbAWDdWN_pkOim4rWVXUlfuYjfyJqUHZ" -O preTrainedModel.zip && rm -rf /tmp/cookies.txt
     ```
 
-#### 1. Speaker Verification
+#### Speaker Verification
 To reproduce voxceleb EER results with the pretrained model, follow the below steps.
 NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` prior to evaluation.
 
@@ -161,7 +182,11 @@ NOTE: The voxceleb features must be prepared using `prepare_feats_for_egs.sh` pr
    ```
    bash pytorch_run.sh
    ```
-#### 2. Speaker Diarization
+#### Speaker Diarization
+
+```
+cd egs/
+```
 Place the audio files to diarize and their corresponding RTTM files in `demo_wav/` and `demo_rttm/` directories. Execute:
 ```
 bash diarize.sh
