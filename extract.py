@@ -48,7 +48,7 @@ def main():
 
     # Check for trained model
     try:
-        modelFile = max(glob.glob(args.modelDirectory+'/*'), key=os.path.getctime)
+        modelFile = max(glob.glob(args.modelDirectory+'/*.tar'), key=os.path.getctime)
     except ValueError:
         print("[ERROR] No trained model has been found in {}.".format(args.modelDirectory) )
         sys.exit(1)
