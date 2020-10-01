@@ -27,11 +27,26 @@ def main():
     parser.add_argument('-modelType', default='xvecTDNN', help='Refer train_utils.py ')
     parser.add_argument('-numSpkrs', default=7323, type=int, help='Number of output labels for model')
     parser.add_argument('-layerName', default='fc1', help="DNN layer for embeddings")
+    parser.add_argument('-nProcs', default=0, type=int, help='Number of parallel processes. Default=0(Number of input directory splits)')
     parser.add_argument('modelDirectory', help='Directory containing the model checkpoints')
     parser.add_argument('featDir', help='Directory containing features ready for extraction')
     parser.add_argument('embeddingDir', help='Output directory')
     args = parser.parse_args()
 
+    # Checking for input features and splitN directories
+    try:
+        nSplits = int(sorted(glob.glob(args.featDir+'/split*'),
+                  key=getSplitNum)[-1].split('/')[-1].lstrip('split'))
+    except ValueError:
+        print('[ERROR] Cannot find %s/splitN directory' %args.featDir)
+        print('Use utils/split_data.sh to create this directory')
+        sys.exit(1)
+
+    if not os.path.isfile('%s/split%d/1/feats.scp' %(args.featDir, nSplits)):
+        print('Cannot find input features')
+        sys.exit(1)
+
+    # Check for trained model
     try:
         modelFile = max(glob.glob(args.modelDirectory+'/*'), key=os.path.getctime)
     except ValueError:
@@ -58,23 +73,17 @@ def main():
     net = net.cuda()
     net.eval()
 
-    # Parallel Processing
-    try:
-        nSplits = int(sorted(glob.glob(args.featDir+'/split*'),
-                  key=getSplitNum)[-1].split('/')[-1].lstrip('split'))
-    except ValueError:
-        print('[ERROR] Cannot find %s/splitN directory' %args.featDir)
-        sys.exit(1)
-
     if not os.path.isdir(args.embeddingDir):
         os.makedirs(args.embeddingDir)
 
     print('Extracting xvectors by distributing jobs to pool workers... ')
-    nProcs = nSplits
+    if not args.nProcs:
+        args.nProcs = nSplits
+
     L = [('%s/split%d/%d/feats.scp' %(args.featDir, nSplits, i),
         '%s/xvector.%d.ark' %(args.embeddingDir, i),
         '%s/xvector.%d.scp' %(args.embeddingDir, i), net, args.layerName ) for i in range(1,nSplits+1)]
-    pool2 = Pool(processes=nProcs)
+    pool2 = Pool(processes=args.nProcs)
     result = pool2.starmap(par_core_extractXvectors, L )
     pool2.terminate()
     print('Multithread job has been finished.')
