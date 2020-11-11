@@ -50,7 +50,7 @@ while step < totalSteps:
 
     archiveI = step%args.numArchives + 1
     archive_start_time = time.time()
-    ark_file = '{}/egs.{}.ark'.format(args.egsDir,archiveI)
+    ark_file = '{}/egs.{}.ark'.format(args.featDir,archiveI)
     print('Reading from archive %d' %archiveI)
 
     preFetchRatio = args.preFetchRatio
